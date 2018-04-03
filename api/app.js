@@ -3,15 +3,18 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const mongoose = require('mongoose');
 require('dotenv').config()
-//you can change database by yourself by typing your db name in below after mongodb://localhost/your_database_name
-mongoose.connect('mongodb://erwinwahyura:'+process.env.yourpassword+'@ds161042.mlab.com:61042/erwar-todo')
+const normalizePort = require('normalize-port')
 
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-  // we're connected!
-  console.log('connection success!!!');
+// ========= mongodb mlab ===
+const uri = 'mongodb://'+process.env.DB_USERNAME+':'+process.env.DB_PASSWORD+'@ds131329.mlab.com:31329/'+process.env.DB_NAME
+mongoose.connect(uri, {useMongoClient: true}, function(err) {
+  if(err) {
+    console.log('Error connecting to the database. ' + err);
+  } else {
+    console.log('Connected to Database: ');
+  }
 });
+// ========- end of mlab ===
 
 var index = require('./routes/index')
 
@@ -24,6 +27,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/', index);
 
-app.listen(3000)
+const port = normalizePort(process.env.PORT || '3000')
+app.listen(port, () => console.log('listening on port ', port))
 
 module.exports = app
