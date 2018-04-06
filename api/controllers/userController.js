@@ -38,34 +38,49 @@ module.exports = {
   },
   login: (req, res) => {
     const { username, email, password } = req.body
-    console.log(username, email);
     UserModel.find({
       $or: [{email}, {username}]
     }, (err, user) => {
-      console.log(err, user)
-      if (err)
+      if (user.length === 0) {
+        res.status(500).send({
+          ok: false,
+          message: 'username not found!'
+        })
+      }
+      if (err) {
         res.status(500).send({
           ok: false,
           message: err
         })
-      const { id, role } = user
-      const authorization = jwt.sign({id, role}, process.env.SECRET)
-      const objAuth = {
-        access_token: authorization,
-        expiratesIn: 1001,
-        grant_type: "Bearer"
+      } else if (user.length > 0) {
+        //bcrypt compare
+        console.log('masuk sini passwordnya ada');
+        const isRight = bcrypt.compareSync(password, user[0].password)
+        if (isRight) {
+          const { id, role } = user
+          const authorization = jwt.sign({id, role}, process.env.SECRET)
+          const objAuth = {
+            access_token: authorization,
+            expiratesIn: 1001,
+            token_type: "Bearer"
+          }
+          res.status(201).send({
+            ok: true,
+            authResponse: objAuth
+          })
+        } else {
+          res.status(400).send({
+            ok: false,
+            message: 'Your Password Is Incorrect!'
+          })
+        }
       }
-      res.status(201).send({
-        ok: true,
-        authResponse: objAuth
-      })
     })
   },
   users: (req, res) => {
     UserModel.find({})
       .then((response) => {
         const obj = []
-
         response.forEach(user => {
           const data = {
             _id: user._id,
@@ -97,5 +112,4 @@ module.exports = {
         })
       })
   }
-
 };
